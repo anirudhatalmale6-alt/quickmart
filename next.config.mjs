@@ -1,4 +1,8 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  output: "export",
+  basePath: "/quickmart",
+  images: { unoptimized: true },
+};
 
 export default nextConfig;

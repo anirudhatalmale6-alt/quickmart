@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { verifyAdmin, loginAdmin } from "@/lib/clientStore";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -16,21 +17,13 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Login failed");
+      if (!verifyAdmin(username, password)) {
+        setError("Invalid username or password");
         setLoading(false);
         return;
       }
 
-      localStorage.setItem("quickmart-admin-token", data.token);
+      loginAdmin();
       router.push("/admin/dashboard");
     } catch {
       setError("Something went wrong");

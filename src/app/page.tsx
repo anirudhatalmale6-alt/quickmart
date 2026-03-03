@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Product, CATEGORIES, CATEGORY_CONFIG } from "@/lib/types";
+import { getProducts } from "@/lib/clientStore";
 import Header from "@/components/Header";
 import ProductCard from "@/components/ProductCard";
 import { useCart } from "@/components/CartProvider";
@@ -15,13 +16,8 @@ export default function HomePage() {
   const { totalItems, totalPrice } = useCart();
 
   useEffect(() => {
-    fetch("/api/products")
-      .then((r) => r.json())
-      .then((data) => {
-        setProducts(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    setProducts(getProducts());
+    setLoading(false);
   }, []);
 
   const filtered = products.filter((p) => {

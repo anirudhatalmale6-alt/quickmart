@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useCart } from "@/components/CartProvider";
+import { addOrder } from "@/lib/clientStore";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function CheckoutPage() {
     return null;
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -40,29 +41,22 @@ export default function CheckoutPage() {
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerName: name.trim(),
-          customerPhone: phone.trim(),
-          locationType,
-          location: location.trim(),
-          paymentMethod,
-          items: items.map((i) => ({
-            productId: i.product.id,
-            productName: i.product.name,
-            quantity: i.quantity,
-            price: i.product.price,
-          })),
-          total: totalPrice,
-          deliveryCharge: 0,
-        }),
+      const order = addOrder({
+        customerName: name.trim(),
+        customerPhone: phone.trim(),
+        locationType,
+        location: location.trim(),
+        paymentMethod,
+        items: items.map((i) => ({
+          productId: i.product.id,
+          productName: i.product.name,
+          quantity: i.quantity,
+          price: i.product.price,
+        })),
+        total: totalPrice,
+        deliveryCharge: 0,
       });
 
-      if (!res.ok) throw new Error("Failed to place order");
-
-      const order = await res.json();
       clearCart();
       router.push(`/order-success?id=${order.id}`);
     } catch {

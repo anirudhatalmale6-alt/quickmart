@@ -1,8 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Product, Order, CATEGORIES, ORDER_STATUS_LABELS } from "@/lib/types";
+import {
+  getAllProducts,
+  getOrders,
+  addProduct as storeAddProduct,
+  updateProduct as storeUpdateProduct,
+  deleteProduct as storeDeleteProduct,
+  updateOrderStatus as storeUpdateOrderStatus,
+  isAdminLoggedIn,
+  logoutAdmin,
+} from "@/lib/clientStore";
 
 const CATEGORY_EMOJIS: Record<string, string> = {
   Fruits: "🍎",
@@ -18,7 +28,6 @@ const CATEGORY_EMOJIS: Record<string, string> = {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [token, setToken] = useState("");
   const [tab, setTab] = useState<"products" | "orders">("products");
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -37,31 +46,19 @@ export default function AdminDashboard() {
   const [formImage, setFormImage] = useState("");
   const [formInStock, setFormInStock] = useState(true);
 
-  const fetchData = useCallback(async (t: string) => {
-    try {
-      const headers = { Authorization: `Bearer ${t}` };
-      const [prodRes, orderRes] = await Promise.all([
-        fetch("/api/products?all=true", { headers }),
-        fetch("/api/orders", { headers }),
-      ]);
-
-      if (prodRes.ok) setProducts(await prodRes.json());
-      if (orderRes.ok) setOrders(await orderRes.json());
-    } catch {
-      /* ignore */
-    }
-    setLoading(false);
-  }, []);
+  const refreshData = () => {
+    setProducts(getAllProducts());
+    setOrders(getOrders());
+  };
 
   useEffect(() => {
-    const t = localStorage.getItem("quickmart-admin-token");
-    if (!t) {
+    if (!isAdminLoggedIn()) {
       router.push("/admin");
       return;
     }
-    setToken(t);
-    fetchData(t);
-  }, [router, fetchData]);
+    refreshData();
+    setLoading(false);
+  }, [router]);
 
   const resetForm = () => {
     setFormName("");
@@ -109,15 +106,10 @@ export default function AdminDashboard() {
     reader.readAsDataURL(file);
   };
 
-  const handleSaveProduct = async () => {
+  const handleSaveProduct = () => {
     if (!formName || !formPrice || !formUnit) return;
 
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-
-    const body: Record<string, unknown> = {
+    const data = {
       name: formName,
       price: parseFloat(formPrice),
       unit: formUnit,
@@ -125,68 +117,37 @@ export default function AdminDashboard() {
       description: formDescription,
       emoji: formEmoji,
       inStock: formInStock,
+      image: formImage || undefined,
     };
 
-    if (formImage) {
-      body.image = formImage;
-    }
-
     if (editingProduct) {
-      await fetch(`/api/products/${editingProduct.id}`, {
-        method: "PUT",
-        headers,
-        body: JSON.stringify(body),
-      });
+      storeUpdateProduct(editingProduct.id, data);
     } else {
-      await fetch("/api/products", {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body),
-      });
+      storeAddProduct(data);
     }
 
     resetForm();
-    fetchData(token);
+    refreshData();
   };
 
-  const handleDeleteProduct = async (id: string) => {
+  const handleDeleteProduct = (id: string) => {
     if (!confirm("Delete this product?")) return;
-    await fetch(`/api/products/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchData(token);
+    storeDeleteProduct(id);
+    refreshData();
   };
 
-  const handleToggleStock = async (p: Product) => {
-    await fetch(`/api/products/${p.id}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ inStock: !p.inStock }),
-    });
-    fetchData(token);
+  const handleToggleStock = (p: Product) => {
+    storeUpdateProduct(p.id, { inStock: !p.inStock });
+    refreshData();
   };
 
-  const handleUpdateOrderStatus = async (
-    orderId: string,
-    status: string
-  ) => {
-    await fetch(`/api/orders/${orderId}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ status }),
-    });
-    fetchData(token);
+  const handleUpdateOrderStatus = (orderId: string, status: string) => {
+    storeUpdateOrderStatus(orderId, status as Order["status"]);
+    refreshData();
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("quickmart-admin-token");
+    logoutAdmin();
     router.push("/admin");
   };
 
