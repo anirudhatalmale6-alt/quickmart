@@ -4,6 +4,7 @@ export interface Product {
   description: string;
   price: number;
   emoji: string;
+  image?: string; // base64 data URL or external URL
   category: string;
   unit: string;
   inStock: boolean;
@@ -51,6 +52,8 @@ export const CATEGORIES = [
   "Snacks",
   "Beverages",
   "Household",
+  "Electronics",
+  "Personal Care",
 ] as const;
 
 export const CATEGORY_CONFIG: Record<
@@ -64,6 +67,8 @@ export const CATEGORY_CONFIG: Record<
   Snacks: { emoji: "🍿", gradient: "from-yellow-100 to-amber-50" },
   Beverages: { emoji: "🥤", gradient: "from-violet-100 to-purple-50" },
   Household: { emoji: "🧹", gradient: "from-teal-100 to-cyan-50" },
+  Electronics: { emoji: "🔌", gradient: "from-indigo-100 to-blue-50" },
+  "Personal Care": { emoji: "🧴", gradient: "from-pink-100 to-rose-50" },
 };
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {

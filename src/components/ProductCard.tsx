@@ -20,11 +20,19 @@ export default function ProductCard({ product }: { product: Product }) {
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-stone-100 opacity-0 animate-fade-in">
-      {/* Emoji display area */}
+      {/* Image / Emoji display area */}
       <div
-        className={`bg-gradient-to-br ${config.gradient} h-28 sm:h-32 flex items-center justify-center relative`}
+        className={`bg-gradient-to-br ${config.gradient} h-32 sm:h-36 flex items-center justify-center relative overflow-hidden`}
       >
-        <span className="text-5xl sm:text-6xl">{product.emoji}</span>
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <span className="text-5xl sm:text-6xl">{product.emoji}</span>
+        )}
         {!product.inStock && (
           <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
             <span className="text-sm font-medium text-stone-500 bg-white px-3 py-1 rounded-full">
@@ -36,12 +44,17 @@ export default function ProductCard({ product }: { product: Product }) {
 
       {/* Info */}
       <div className="p-3 sm:p-4">
-        <h3 className="font-heading font-semibold text-sm sm:text-base text-stone-900 leading-tight">
+        <h3 className="font-heading font-semibold text-sm sm:text-base text-stone-900 leading-tight line-clamp-2">
           {product.name}
         </h3>
-        <p className="text-xs text-stone-400 mt-0.5">{product.unit}</p>
+        <p className="text-[11px] text-stone-400 mt-0.5 line-clamp-1">
+          {product.description}
+        </p>
+        <p className="text-xs text-stone-500 mt-0.5 font-medium">
+          {product.unit}
+        </p>
 
-        <div className="flex items-center justify-between mt-3">
+        <div className="flex items-center justify-between mt-2.5">
           <span className="font-heading font-bold text-base sm:text-lg text-stone-900">
             ₹{product.price}
           </span>

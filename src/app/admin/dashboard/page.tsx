@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Product, Order, CATEGORIES, ORDER_STATUS_LABELS } from "@/lib/types";
 
@@ -12,6 +12,8 @@ const CATEGORY_EMOJIS: Record<string, string> = {
   Snacks: "🍿",
   Beverages: "🥤",
   Household: "🧹",
+  Electronics: "🔌",
+  "Personal Care": "🧴",
 };
 
 export default function AdminDashboard() {
@@ -23,6 +25,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [formName, setFormName] = useState("");
@@ -31,26 +34,24 @@ export default function AdminDashboard() {
   const [formCategory, setFormCategory] = useState("Fruits");
   const [formDescription, setFormDescription] = useState("");
   const [formEmoji, setFormEmoji] = useState("🍎");
+  const [formImage, setFormImage] = useState("");
   const [formInStock, setFormInStock] = useState(true);
 
-  const fetchData = useCallback(
-    async (t: string) => {
-      try {
-        const headers = { Authorization: `Bearer ${t}` };
-        const [prodRes, orderRes] = await Promise.all([
-          fetch("/api/products?all=true", { headers }),
-          fetch("/api/orders", { headers }),
-        ]);
+  const fetchData = useCallback(async (t: string) => {
+    try {
+      const headers = { Authorization: `Bearer ${t}` };
+      const [prodRes, orderRes] = await Promise.all([
+        fetch("/api/products?all=true", { headers }),
+        fetch("/api/orders", { headers }),
+      ]);
 
-        if (prodRes.ok) setProducts(await prodRes.json());
-        if (orderRes.ok) setOrders(await orderRes.json());
-      } catch {
-        /* ignore */
-      }
-      setLoading(false);
-    },
-    []
-  );
+      if (prodRes.ok) setProducts(await prodRes.json());
+      if (orderRes.ok) setOrders(await orderRes.json());
+    } catch {
+      /* ignore */
+    }
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     const t = localStorage.getItem("quickmart-admin-token");
@@ -69,9 +70,11 @@ export default function AdminDashboard() {
     setFormCategory("Fruits");
     setFormDescription("");
     setFormEmoji("🍎");
+    setFormImage("");
     setFormInStock(true);
     setEditingProduct(null);
     setShowForm(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const openAddForm = () => {
@@ -87,8 +90,23 @@ export default function AdminDashboard() {
     setFormCategory(p.category);
     setFormDescription(p.description);
     setFormEmoji(p.emoji);
+    setFormImage(p.image || "");
     setFormInStock(p.inStock);
     setShowForm(true);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Image must be under 2MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFormImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSaveProduct = async () => {
@@ -99,7 +117,7 @@ export default function AdminDashboard() {
       "Content-Type": "application/json",
     };
 
-    const body = {
+    const body: Record<string, unknown> = {
       name: formName,
       price: parseFloat(formPrice),
       unit: formUnit,
@@ -108,6 +126,10 @@ export default function AdminDashboard() {
       emoji: formEmoji,
       inStock: formInStock,
     };
+
+    if (formImage) {
+      body.image = formImage;
+    }
 
     if (editingProduct) {
       await fetch(`/api/products/${editingProduct.id}`, {
@@ -197,7 +219,10 @@ export default function AdminDashboard() {
               </svg>
             </span>
             <span className="font-heading font-bold text-stone-900">
-              QuickMart <span className="text-stone-400 font-normal text-sm">Admin</span>
+              QuickMart{" "}
+              <span className="text-stone-400 font-normal text-sm">
+                Admin
+              </span>
             </span>
           </div>
           <button
@@ -291,6 +316,76 @@ export default function AdminDashboard() {
                   </h3>
 
                   <div className="space-y-3">
+                    {/* Product Image Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-stone-600 mb-1">
+                        Product Photo
+                      </label>
+                      <div className="flex items-center gap-3">
+                        {formImage ? (
+                          <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-stone-200">
+                            <img
+                              src={formImage}
+                              alt="Preview"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              onClick={() => {
+                                setFormImage("");
+                                if (fileInputRef.current)
+                                  fileInputRef.current.value = "";
+                              }}
+                              className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
+                            >
+                              x
+                            </button>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-20 h-20 rounded-xl border-2 border-dashed border-stone-300 flex flex-col items-center justify-center cursor-pointer hover:border-brand-green hover:bg-emerald-50/30 transition-colors"
+                          >
+                            <svg
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className="text-stone-400"
+                            >
+                              <rect
+                                x="3"
+                                y="3"
+                                width="18"
+                                height="18"
+                                rx="2"
+                              />
+                              <circle cx="8.5" cy="8.5" r="1.5" />
+                              <path d="M21 15l-5-5L5 21" />
+                            </svg>
+                            <span className="text-[10px] text-stone-400 mt-1">
+                              Upload
+                            </span>
+                          </div>
+                        )}
+                        <div className="text-xs text-stone-400">
+                          <p>Upload a photo of the product.</p>
+                          <p>JPG, PNG under 2MB.</p>
+                          <p className="text-stone-300 mt-1">
+                            (Optional — emoji shown if no photo)
+                          </p>
+                        </div>
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </div>
+
                     <div>
                       <label className="block text-sm font-medium text-stone-600 mb-1">
                         Product Name *
@@ -299,8 +394,21 @@ export default function AdminDashboard() {
                         type="text"
                         value={formName}
                         onChange={(e) => setFormName(e.target.value)}
-                        placeholder="e.g. Fresh Tomatoes"
+                        placeholder="e.g. Amul Butter 500g"
                         className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-stone-600 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        value={formDescription}
+                        onChange={(e) => setFormDescription(e.target.value)}
+                        placeholder="Brand name, details, what customer should know"
+                        rows={2}
+                        className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green resize-none"
                       />
                     </div>
 
@@ -325,57 +433,47 @@ export default function AdminDashboard() {
                           type="text"
                           value={formUnit}
                           onChange={(e) => setFormUnit(e.target.value)}
-                          placeholder="1 kg, 500g, 1L"
+                          placeholder="1 kg, 500g, 1L, 1 pc"
                           className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-stone-600 mb-1">
-                        Category
-                      </label>
-                      <select
-                        value={formCategory}
-                        onChange={(e) => {
-                          setFormCategory(e.target.value);
-                          setFormEmoji(
-                            CATEGORY_EMOJIS[e.target.value] || "📦"
-                          );
-                        }}
-                        className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
-                      >
-                        {CATEGORIES.filter((c) => c !== "All").map((c) => (
-                          <option key={c} value={c}>
-                            {CATEGORY_EMOJIS[c]} {c}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-stone-600 mb-1">
-                        Emoji Icon
-                      </label>
-                      <input
-                        type="text"
-                        value={formEmoji}
-                        onChange={(e) => setFormEmoji(e.target.value)}
-                        className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-stone-600 mb-1">
-                        Description
-                      </label>
-                      <textarea
-                        value={formDescription}
-                        onChange={(e) => setFormDescription(e.target.value)}
-                        placeholder="Short description"
-                        rows={2}
-                        className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green resize-none"
-                      />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-stone-600 mb-1">
+                          Category
+                        </label>
+                        <select
+                          value={formCategory}
+                          onChange={(e) => {
+                            setFormCategory(e.target.value);
+                            setFormEmoji(
+                              CATEGORY_EMOJIS[e.target.value] || "📦"
+                            );
+                          }}
+                          className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                        >
+                          {CATEGORIES.filter((c) => c !== "All").map(
+                            (c) => (
+                              <option key={c} value={c}>
+                                {CATEGORY_EMOJIS[c]} {c}
+                              </option>
+                            )
+                          )}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-stone-600 mb-1">
+                          Emoji Icon
+                        </label>
+                        <input
+                          type="text"
+                          value={formEmoji}
+                          onChange={(e) => setFormEmoji(e.target.value)}
+                          className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                        />
+                      </div>
                     </div>
 
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -414,14 +512,26 @@ export default function AdminDashboard() {
                   key={p.id}
                   className="bg-white rounded-xl p-3 border border-stone-100 flex items-center gap-3"
                 >
-                  <span className="text-2xl w-10 text-center">{p.emoji}</span>
+                  {p.image ? (
+                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-2xl w-10 text-center flex-shrink-0">
+                      {p.emoji}
+                    </span>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm text-stone-900 truncate">
                         {p.name}
                       </span>
                       {!p.inStock && (
-                        <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                        <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full flex-shrink-0">
                           Out
                         </span>
                       )}
@@ -430,7 +540,7 @@ export default function AdminDashboard() {
                       ₹{p.price} / {p.unit} · {p.category}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 flex-shrink-0">
                     <button
                       onClick={() => handleToggleStock(p)}
                       className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${
@@ -525,11 +635,12 @@ export default function AdminDashboard() {
                         · {order.customerPhone}
                       </p>
                       <p className="text-xs text-stone-500">
-                        {order.locationType === "maps_link" ? "📍 " : "📮 "}
+                        {order.locationType === "maps_link"
+                          ? "📍 "
+                          : "📮 "}
                         {order.location}
                       </p>
                       <p className="text-xs text-stone-500">
-                        💳{" "}
                         {order.paymentMethod === "upi"
                           ? "UPI"
                           : "Cash on Delivery"}

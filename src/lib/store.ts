@@ -59,7 +59,7 @@ const seedProducts: Product[] = [
   {
     id: "p6",
     name: "Amul Butter",
-    description: "Creamy Amul pasteurized butter",
+    description: "Creamy Amul pasteurized butter — India's #1 butter brand",
     price: 280,
     emoji: "🧈",
     category: "Dairy",
@@ -70,7 +70,7 @@ const seedProducts: Product[] = [
   {
     id: "p7",
     name: "Amul Toned Milk",
-    description: "Fresh pasteurized toned milk",
+    description: "Fresh pasteurized toned milk by Amul",
     price: 68,
     emoji: "🥛",
     category: "Dairy",
@@ -80,8 +80,8 @@ const seedProducts: Product[] = [
   },
   {
     id: "p8",
-    name: "Paneer (Cottage Cheese)",
-    description: "Fresh and soft paneer, great for curries",
+    name: "Amul Paneer",
+    description: "Fresh and soft paneer by Amul, great for curries and tikka",
     price: 90,
     emoji: "🧀",
     category: "Dairy",
@@ -91,8 +91,8 @@ const seedProducts: Product[] = [
   },
   {
     id: "p9",
-    name: "Basmati Rice",
-    description: "Premium long-grain aged basmati rice",
+    name: "India Gate Basmati Rice",
+    description: "Premium long-grain aged basmati rice — Classic variety",
     price: 180,
     emoji: "🍚",
     category: "Staples",
@@ -103,7 +103,7 @@ const seedProducts: Product[] = [
   {
     id: "p10",
     name: "Aashirvaad Atta",
-    description: "Whole wheat flour for soft rotis",
+    description: "Aashirvaad whole wheat flour — makes soft rotis every time",
     price: 320,
     emoji: "🌾",
     category: "Staples",
@@ -113,8 +113,8 @@ const seedProducts: Product[] = [
   },
   {
     id: "p11",
-    name: "Toor Dal",
-    description: "Premium quality toor dal for everyday cooking",
+    name: "Tata Toor Dal",
+    description: "Tata Sampann premium quality unpolished toor dal",
     price: 150,
     emoji: "🫘",
     category: "Staples",
@@ -125,7 +125,7 @@ const seedProducts: Product[] = [
   {
     id: "p12",
     name: "Haldiram's Aloo Bhujia",
-    description: "Crispy and spicy classic namkeen snack",
+    description: "Haldiram's crispy and spicy classic namkeen snack",
     price: 99,
     emoji: "🍿",
     category: "Snacks",
@@ -135,8 +135,8 @@ const seedProducts: Product[] = [
   },
   {
     id: "p13",
-    name: "Parle-G Biscuits",
-    description: "India's favourite glucose biscuits",
+    name: "Parle-G Gold Biscuits",
+    description: "India's favourite glucose biscuits — Parle-G Gold",
     price: 55,
     emoji: "🍪",
     category: "Snacks",
@@ -147,7 +147,7 @@ const seedProducts: Product[] = [
   {
     id: "p14",
     name: "Lays Classic Salted",
-    description: "Light and crispy salted potato chips",
+    description: "Lays light and crispy salted potato chips",
     price: 40,
     emoji: "🥔",
     category: "Snacks",
@@ -158,7 +158,7 @@ const seedProducts: Product[] = [
   {
     id: "p15",
     name: "Paper Boat Aam Panna",
-    description: "Refreshing raw mango drink",
+    description: "Paper Boat refreshing raw mango drink — traditional taste",
     price: 30,
     emoji: "🧃",
     category: "Beverages",
@@ -169,7 +169,7 @@ const seedProducts: Product[] = [
   {
     id: "p16",
     name: "Coca-Cola",
-    description: "Chilled Coca-Cola for refreshment",
+    description: "Chilled Coca-Cola bottle for refreshment",
     price: 40,
     emoji: "🥤",
     category: "Beverages",
@@ -180,7 +180,7 @@ const seedProducts: Product[] = [
   {
     id: "p17",
     name: "Vim Dishwash Liquid",
-    description: "Powerful grease-cutting dishwash gel",
+    description: "Vim powerful grease-cutting dishwash gel with lemon",
     price: 120,
     emoji: "🧴",
     category: "Household",
@@ -191,11 +191,77 @@ const seedProducts: Product[] = [
   {
     id: "p18",
     name: "Surf Excel Detergent",
-    description: "Tough stain removal washing powder",
+    description: "Surf Excel easy wash — tough stain removal powder",
     price: 215,
     emoji: "🧹",
     category: "Household",
     unit: "1 kg",
+    inStock: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "p19",
+    name: "Ambrane Power Bank 10000mAh",
+    description: "Ambrane Stylo 10K — 10000mAh Li-Polymer, 20W fast charging, dual USB output",
+    price: 799,
+    emoji: "🔋",
+    category: "Electronics",
+    unit: "1 pc",
+    inStock: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "p20",
+    name: "boAt Airdopes 141",
+    description: "boAt Airdopes 141 TWS — Bluetooth 5.1, 42hr battery, IPX4, mic",
+    price: 1299,
+    emoji: "🎧",
+    category: "Electronics",
+    unit: "1 pc",
+    inStock: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "p21",
+    name: "Mi 20W USB-C Charger",
+    description: "Xiaomi 20W USB Type-C fast charger — BIS certified, compact design",
+    price: 599,
+    emoji: "🔌",
+    category: "Electronics",
+    unit: "1 pc",
+    inStock: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "p22",
+    name: "USB-C Data Cable (1m)",
+    description: "Braided USB-C to USB-C cable — 3A fast charging, durable nylon",
+    price: 199,
+    emoji: "🔗",
+    category: "Electronics",
+    unit: "1 pc",
+    inStock: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "p23",
+    name: "Dettol Handwash",
+    description: "Dettol Original antibacterial liquid handwash — germ protection",
+    price: 99,
+    emoji: "🧼",
+    category: "Personal Care",
+    unit: "200 ml",
+    inStock: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "p24",
+    name: "Colgate MaxFresh Toothpaste",
+    description: "Colgate MaxFresh with cooling crystals — blue gel toothpaste",
+    price: 85,
+    emoji: "🪥",
+    category: "Personal Care",
+    unit: "150 g",
     inStock: true,
     createdAt: new Date().toISOString(),
   },
@@ -204,7 +270,7 @@ const seedProducts: Product[] = [
 // In-memory store
 let products: Product[] = [...seedProducts];
 const orders: Order[] = [];
-let nextProductNum = 19;
+let nextProductNum = 25;
 
 // Admin credentials
 const ADMIN_USER = "admin";
