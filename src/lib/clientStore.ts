@@ -360,11 +360,33 @@ export function updateOrderStatus(id: string, status: Order["status"]): Order | 
 }
 
 // Auth
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "admin123";
+const ADMIN_CREDS_KEY = "quickmart-admin-creds";
+const DEFAULT_USER = "admin";
+const DEFAULT_PASS = "admin123";
+
+function getAdminCreds(): { username: string; password: string } {
+  const stored = getStored<{ username: string; password: string } | null>(
+    ADMIN_CREDS_KEY,
+    null
+  );
+  if (stored) return stored;
+  return { username: DEFAULT_USER, password: DEFAULT_PASS };
+}
 
 export function verifyAdmin(username: string, password: string): boolean {
-  return username === ADMIN_USER && password === ADMIN_PASS;
+  const creds = getAdminCreds();
+  return username === creds.username && password === creds.password;
+}
+
+export function changePassword(oldPassword: string, newPassword: string): boolean {
+  const creds = getAdminCreds();
+  if (oldPassword !== creds.password) return false;
+  setStored(ADMIN_CREDS_KEY, { username: creds.username, password: newPassword });
+  return true;
+}
+
+export function resetPassword(): void {
+  setStored(ADMIN_CREDS_KEY, { username: DEFAULT_USER, password: DEFAULT_PASS });
 }
 
 export function isAdminLoggedIn(): boolean {

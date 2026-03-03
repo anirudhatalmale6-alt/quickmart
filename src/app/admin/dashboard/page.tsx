@@ -12,6 +12,7 @@ import {
   updateOrderStatus as storeUpdateOrderStatus,
   isAdminLoggedIn,
   logoutAdmin,
+  changePassword,
 } from "@/lib/clientStore";
 
 const CATEGORY_EMOJIS: Record<string, string> = {
@@ -45,6 +46,43 @@ export default function AdminDashboard() {
   const [formEmoji, setFormEmoji] = useState("🍎");
   const [formImage, setFormImage] = useState("");
   const [formInStock, setFormInStock] = useState(true);
+
+  // Change password state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [oldPass, setOldPass] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const [passError, setPassError] = useState("");
+  const [passSuccess, setPassSuccess] = useState(false);
+
+  const handleChangePassword = () => {
+    setPassError("");
+    if (!oldPass || !newPass || !confirmPass) {
+      setPassError("Please fill in all fields");
+      return;
+    }
+    if (newPass.length < 6) {
+      setPassError("New password must be at least 6 characters");
+      return;
+    }
+    if (newPass !== confirmPass) {
+      setPassError("New passwords don't match");
+      return;
+    }
+    if (!changePassword(oldPass, newPass)) {
+      setPassError("Current password is incorrect");
+      return;
+    }
+    setPassSuccess(true);
+    setTimeout(() => {
+      setShowPasswordModal(false);
+      setOldPass("");
+      setNewPass("");
+      setConfirmPass("");
+      setPassError("");
+      setPassSuccess(false);
+    }, 1500);
+  };
 
   const refreshData = () => {
     setProducts(getAllProducts());
@@ -186,12 +224,33 @@ export default function AdminDashboard() {
               </span>
             </span>
           </div>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-stone-500 hover:text-stone-700 transition-colors"
-          >
-            Logout
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              className="text-xs text-stone-400 hover:text-brand-green transition-colors flex items-center gap-1"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0110 0v4" />
+              </svg>
+              Password
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-stone-500 hover:text-stone-700 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
@@ -632,6 +691,104 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+
+      {/* Change Password Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="font-heading font-bold text-lg text-stone-900 mb-4">
+              Change Password
+            </h3>
+
+            {passSuccess ? (
+              <div className="text-center py-4">
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#059669"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  >
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                </div>
+                <p className="text-sm text-emerald-700 font-medium">
+                  Password changed successfully!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 mb-1">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    value={oldPass}
+                    onChange={(e) => setOldPass(e.target.value)}
+                    placeholder="Enter current password"
+                    className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 mb-1">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={newPass}
+                    onChange={(e) => setNewPass(e.target.value)}
+                    placeholder="At least 6 characters"
+                    className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 mb-1">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPass}
+                    onChange={(e) => setConfirmPass(e.target.value)}
+                    placeholder="Repeat new password"
+                    className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                  />
+                </div>
+
+                {passError && (
+                  <div className="bg-red-50 text-red-600 text-sm rounded-xl p-3 border border-red-200">
+                    {passError}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => {
+                      setShowPasswordModal(false);
+                      setOldPass("");
+                      setNewPass("");
+                      setConfirmPass("");
+                      setPassError("");
+                    }}
+                    className="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium py-2.5 rounded-xl text-sm transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleChangePassword}
+                    className="flex-1 bg-brand-green hover:bg-brand-green-dark text-white font-medium py-2.5 rounded-xl text-sm transition-colors"
+                  >
+                    Update Password
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

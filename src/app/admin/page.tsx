@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { verifyAdmin, loginAdmin } from "@/lib/clientStore";
+import { verifyAdmin, loginAdmin, resetPassword } from "@/lib/clientStore";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -10,8 +10,10 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showReset, setShowReset] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -29,6 +31,15 @@ export default function AdminLoginPage() {
       setError("Something went wrong");
       setLoading(false);
     }
+  };
+
+  const handleResetPassword = () => {
+    resetPassword();
+    setResetDone(true);
+    setShowReset(false);
+    setUsername("admin");
+    setPassword("");
+    setError("");
   };
 
   return (
@@ -95,6 +106,12 @@ export default function AdminLoginPage() {
             </div>
           )}
 
+          {resetDone && (
+            <div className="bg-emerald-50 text-emerald-700 text-sm rounded-xl p-3 border border-emerald-200">
+              Password reset! Use <strong>admin</strong> / <strong>admin123</strong> to login.
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
@@ -102,7 +119,54 @@ export default function AdminLoginPage() {
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setShowReset(true)}
+              className="text-xs text-stone-400 hover:text-brand-green transition-colors"
+            >
+              Forgot Password?
+            </button>
+          </div>
         </form>
+
+        {/* Forgot Password Modal */}
+        {showReset && (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+              <h3 className="font-heading font-bold text-lg text-stone-900 mb-2">
+                Reset Password
+              </h3>
+              <p className="text-sm text-stone-500 mb-5">
+                This will reset your admin password back to the default
+                credentials:
+              </p>
+              <div className="bg-stone-50 rounded-xl p-3 mb-5 border border-stone-200">
+                <p className="text-sm text-stone-700">
+                  Username: <strong>admin</strong>
+                </p>
+                <p className="text-sm text-stone-700">
+                  Password: <strong>admin123</strong>
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowReset(false)}
+                  className="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium py-2.5 rounded-xl text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleResetPassword}
+                  className="flex-1 bg-brand-orange hover:bg-brand-orange-dark text-white font-medium py-2.5 rounded-xl text-sm transition-colors"
+                >
+                  Reset Password
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

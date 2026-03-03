@@ -86,6 +86,57 @@ html {
 .stagger > *:nth-child(11) { animation-delay: 400ms; }
 .stagger > *:nth-child(12) { animation-delay: 440ms; }
 
+/* Delivery animation */
+.delivery-scooter {
+  transition: left 0.3s ease-out;
+}
+.scooter-bounce {
+  animation: scooterBounce 0.4s ease-in-out infinite;
+}
+@keyframes scooterBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+.exhaust-puff {
+  animation: puff 1s ease-out infinite;
+}
+.exhaust-puff-2 {
+  animation: puff 1s ease-out infinite 0.3s;
+}
+@keyframes puff {
+  0% { opacity: 0.6; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-8px) scale(1.5); }
+}
+.road-dash {
+  animation: dashMove 2s linear infinite;
+}
+@keyframes dashMove {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+.location-ping {
+  animation: ping 1.5s ease-in-out infinite;
+}
+@keyframes ping {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; }
+  50% { transform: translateX(-50%) scale(1.4); opacity: 0.6; }
+}
+.time-pulse {
+  animation: timePulse 2s ease-in-out infinite;
+}
+@keyframes timePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.stage-active {
+  animation: stageGlow 1.5s ease-in-out infinite;
+}
+@keyframes stageGlow {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15); }
+  50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.08); }
+}
+
 /* Input styles */
 input[type="text"],
 input[type="tel"],
