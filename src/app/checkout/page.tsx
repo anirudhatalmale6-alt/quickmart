@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useCart } from "@/components/CartProvider";
-import { addOrder, getSettings, updatePaymentStatus } from "@/lib/clientStore";
+import { addOrder, getSettings } from "@/lib/clientStore";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -21,9 +21,11 @@ export default function CheckoutPage() {
   const [upiId, setUpiId] = useState("");
   const [storeName, setStoreName] = useState("QuickMart");
 
-  // UPI payment confirmation step
+  // UPI payment step
   const [upiStep, setUpiStep] = useState<"checkout" | "pay">("checkout");
   const [pendingOrderId, setPendingOrderId] = useState("");
+  const [orderTotal, setOrderTotal] = useState(0);
+  const [upiOpened, setUpiOpened] = useState(false);
 
   useEffect(() => {
     const settings = getSettings();
@@ -69,10 +71,12 @@ export default function CheckoutPage() {
         deliveryCharge: 0,
       });
 
+      // Save total before clearing cart
+      setOrderTotal(totalPrice);
       clearCart();
 
       if (paymentMethod === "upi" && upiId) {
-        // Show UPI payment step instead of auto-confirming
+        // Show UPI payment step
         setPendingOrderId(order.id);
         setUpiStep("pay");
         setSubmitting(false);
@@ -88,21 +92,13 @@ export default function CheckoutPage() {
   };
 
   const handleOpenUpiApp = () => {
-    const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(storeName)}&am=${totalPrice}&cu=INR&tn=${encodeURIComponent(`Order ${pendingOrderId} - ${storeName}`)}`;
+    const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(storeName)}&am=${orderTotal}&cu=INR&tn=${encodeURIComponent(`Order ${pendingOrderId} - ${storeName}`)}`;
     window.location.href = upiLink;
+    setUpiOpened(true);
   };
 
-  const handleConfirmPayment = () => {
-    updatePaymentStatus(pendingOrderId, "paid");
-    router.push(`/order-success?id=${pendingOrderId}`);
-  };
-
-  const handlePaymentNotDone = () => {
-    updatePaymentStatus(pendingOrderId, "not_paid");
-    router.push(`/order-success?id=${pendingOrderId}`);
-  };
-
-  // UPI Payment Confirmation Step
+  // UPI Payment Step — customer opens UPI app, then goes to order success
+  // Payment status stays "pending" until admin verifies and marks as "paid"
   if (upiStep === "pay") {
     return (
       <div className="min-h-screen pb-8">
@@ -124,7 +120,7 @@ export default function CheckoutPage() {
             <div className="text-center">
               <p className="text-sm text-stone-500">Amount to pay</p>
               <p className="font-heading font-bold text-3xl text-brand-green mt-1">
-                ₹{totalPrice}
+                ₹{orderTotal}
               </p>
             </div>
 
@@ -133,7 +129,7 @@ export default function CheckoutPage() {
               <p className="text-sm font-bold text-emerald-900 mt-0.5">{upiId}</p>
             </div>
 
-            {/* Step 1: Open UPI App */}
+            {/* Open UPI App */}
             <button
               onClick={handleOpenUpiApp}
               className="w-full bg-brand-green hover:bg-brand-green-dark text-white font-heading font-bold text-lg rounded-2xl py-4 transition-colors shadow-lg shadow-emerald-900/15"
@@ -141,32 +137,38 @@ export default function CheckoutPage() {
               Open UPI App to Pay
             </button>
 
-            <div className="border-t border-stone-100 pt-4">
-              <p className="text-xs text-stone-500 text-center mb-3">
-                After completing payment in your UPI app, come back here and confirm:
-              </p>
-
-              {/* Step 2: Confirm payment */}
-              <div className="space-y-2">
+            {/* After opening UPI app, show "Done" button */}
+            {upiOpened && (
+              <div className="border-t border-stone-100 pt-4 space-y-3">
+                <div className="bg-amber-50 rounded-xl p-3 border border-amber-200">
+                  <p className="text-xs text-amber-800 text-center">
+                    Complete the payment in your UPI app, then tap the button below.
+                    The store owner will verify your payment before confirming the order.
+                  </p>
+                </div>
                 <button
-                  onClick={handleConfirmPayment}
+                  onClick={() => router.push(`/order-success?id=${pendingOrderId}`)}
                   className="w-full bg-brand-orange hover:bg-brand-orange-dark text-white font-heading font-bold rounded-2xl py-3.5 transition-colors"
                 >
-                  I Have Paid Successfully
-                </button>
-                <button
-                  onClick={handlePaymentNotDone}
-                  className="w-full bg-stone-100 hover:bg-stone-200 text-stone-600 font-medium rounded-2xl py-3 text-sm transition-colors"
-                >
-                  I Did Not Pay (Will Pay Later / COD)
+                  Done - View My Order
                 </button>
               </div>
-            </div>
-          </div>
+            )}
 
-          <p className="text-xs text-stone-400 text-center mt-4">
-            The store owner will verify your payment before confirming the order.
-          </p>
+            {!upiOpened && (
+              <div className="border-t border-stone-100 pt-4">
+                <button
+                  onClick={() => router.push(`/order-success?id=${pendingOrderId}`)}
+                  className="w-full bg-stone-100 hover:bg-stone-200 text-stone-600 font-medium rounded-2xl py-3 text-sm transition-colors"
+                >
+                  Skip - Will Pay Later / COD
+                </button>
+                <p className="text-xs text-stone-400 text-center mt-2">
+                  Your order will be on hold until payment is verified.
+                </p>
+              </div>
+            )}
+          </div>
         </main>
       </div>
     );
