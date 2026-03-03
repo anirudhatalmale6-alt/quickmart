@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useCart } from "@/components/CartProvider";
-import { addOrder } from "@/lib/clientStore";
+import { addOrder, getSettings } from "@/lib/clientStore";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -18,6 +18,14 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"upi" | "cod">("cod");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [upiId, setUpiId] = useState("");
+  const [storeName, setStoreName] = useState("QuickMart");
+
+  useEffect(() => {
+    const settings = getSettings();
+    if (settings.upiId) setUpiId(settings.upiId);
+    if (settings.storeName) setStoreName(settings.storeName);
+  }, []);
 
   if (items.length === 0) {
     if (typeof window !== "undefined") router.push("/");
@@ -58,6 +66,19 @@ export default function CheckoutPage() {
       });
 
       clearCart();
+
+      // If UPI selected and UPI ID is set, open UPI deep link
+      if (paymentMethod === "upi" && upiId) {
+        const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(storeName)}&am=${totalPrice}&cu=INR&tn=${encodeURIComponent(`Order ${order.id} - ${storeName}`)}`;
+        // Open UPI app
+        window.location.href = upiLink;
+        // Give a moment for UPI app to open, then redirect to success
+        setTimeout(() => {
+          router.push(`/order-success?id=${order.id}`);
+        }, 1500);
+        return;
+      }
+
       router.push(`/order-success?id=${order.id}`);
     } catch {
       setError("Something went wrong. Please try again.");
@@ -262,11 +283,31 @@ export default function CheckoutPage() {
             </div>
 
             {paymentMethod === "upi" && (
-              <div className="bg-amber-50 rounded-xl p-3 border border-amber-200">
-                <p className="text-xs text-amber-800">
-                  After placing the order, you will receive UPI payment details
-                  via call/WhatsApp.
-                </p>
+              <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200 space-y-3">
+                {upiId ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">💳</span>
+                      <div>
+                        <p className="text-xs text-emerald-700 font-medium">
+                          Pay to UPI ID
+                        </p>
+                        <p className="text-sm font-bold text-emerald-900">
+                          {upiId}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-emerald-600">
+                      After placing the order, tap &quot;Pay Now&quot; to open your UPI
+                      app (GPay, PhonePe, Paytm) with the amount pre-filled.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-amber-800">
+                    UPI payment is being set up. Please choose Cash on Delivery
+                    for now, or contact the store.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -312,7 +353,11 @@ export default function CheckoutPage() {
             disabled={submitting}
             className="w-full bg-brand-orange hover:bg-brand-orange-dark text-white font-heading font-bold text-lg rounded-2xl py-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-orange-900/15"
           >
-            {submitting ? "Placing Order..." : "Place Order"}
+            {submitting
+              ? "Placing Order..."
+              : paymentMethod === "upi" && upiId
+              ? `Pay ₹${totalPrice} & Place Order`
+              : "Place Order"}
           </button>
         </form>
       </main>

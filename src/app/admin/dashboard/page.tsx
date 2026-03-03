@@ -13,6 +13,9 @@ import {
   isAdminLoggedIn,
   logoutAdmin,
   changePassword,
+  getSettings,
+  saveSettings,
+  StoreSettings,
 } from "@/lib/clientStore";
 
 const CATEGORY_EMOJIS: Record<string, string> = {
@@ -29,9 +32,11 @@ const CATEGORY_EMOJIS: Record<string, string> = {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [tab, setTab] = useState<"products" | "orders">("products");
+  const [tab, setTab] = useState<"products" | "orders" | "settings">("products");
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [settings, setSettings] = useState<StoreSettings>({ upiId: "", storeName: "QuickMart", storePhone: "" });
+  const [settingsSaved, setSettingsSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -87,6 +92,13 @@ export default function AdminDashboard() {
   const refreshData = () => {
     setProducts(getAllProducts());
     setOrders(getOrders());
+    setSettings(getSettings());
+  };
+
+  const handleSaveSettings = () => {
+    saveSettings(settings);
+    setSettingsSaved(true);
+    setTimeout(() => setSettingsSaved(false), 2000);
   };
 
   useEffect(() => {
@@ -310,7 +322,119 @@ export default function AdminDashboard() {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setTab("settings")}
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
+              tab === "settings"
+                ? "bg-brand-green text-white"
+                : "bg-white text-stone-600 border border-stone-200"
+            }`}
+          >
+            Settings
+          </button>
         </div>
+
+        {/* Settings Tab */}
+        {tab === "settings" && (
+          <div>
+            <h2 className="font-heading font-bold text-lg text-stone-900 mb-4">
+              Store Settings
+            </h2>
+
+            <div className="bg-white rounded-2xl p-5 border border-stone-100 space-y-5">
+              {/* UPI Settings */}
+              <div>
+                <h3 className="font-heading font-semibold text-stone-900 mb-3 flex items-center gap-2">
+                  <span className="w-6 h-6 bg-brand-green rounded-full text-white text-xs flex items-center justify-center font-bold">
+                    ₹
+                  </span>
+                  UPI Payment Settings
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-stone-600 mb-1">
+                      Your UPI ID *
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.upiId}
+                      onChange={(e) =>
+                        setSettings({ ...settings, upiId: e.target.value })
+                      }
+                      placeholder="yourname@paytm or 9876543210@ybl"
+                      className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                    />
+                    <p className="text-xs text-stone-400 mt-1">
+                      Customers will pay to this UPI ID. Find it in GPay/PhonePe/Paytm under your profile.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-stone-600 mb-1">
+                      Store Name (shown to customer)
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.storeName}
+                      onChange={(e) =>
+                        setSettings({ ...settings, storeName: e.target.value })
+                      }
+                      placeholder="QuickMart"
+                      className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-stone-600 mb-1">
+                      Store Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={settings.storePhone}
+                      onChange={(e) =>
+                        setSettings({ ...settings, storePhone: e.target.value })
+                      }
+                      placeholder="+91 98765 43210"
+                      className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                    />
+                    <p className="text-xs text-stone-400 mt-1">
+                      Customers can contact you on this number for order queries.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleSaveSettings}
+                  className="bg-brand-green hover:bg-brand-green-dark text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
+                >
+                  Save Settings
+                </button>
+                {settingsSaved && (
+                  <span className="text-sm text-emerald-600 font-medium animate-fade-in">
+                    Saved!
+                  </span>
+                )}
+              </div>
+
+              {/* UPI Status */}
+              {!settings.upiId && (
+                <div className="bg-amber-50 rounded-xl p-3 border border-amber-200">
+                  <p className="text-xs text-amber-800">
+                    UPI ID not set yet. Customers choosing UPI at checkout will be asked to contact you for payment details.
+                  </p>
+                </div>
+              )}
+              {settings.upiId && (
+                <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200">
+                  <p className="text-xs text-emerald-800">
+                    UPI is active! Customers choosing UPI at checkout will see a &quot;Pay Now&quot; button that opens their UPI app with your ID and the order amount pre-filled.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Products Tab */}
         {tab === "products" && (

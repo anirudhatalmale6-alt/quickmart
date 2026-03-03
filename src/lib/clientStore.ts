@@ -2,6 +2,7 @@ import { Product, Order } from "./types";
 
 const PRODUCTS_KEY = "quickmart-products";
 const ORDERS_KEY = "quickmart-orders";
+const SETTINGS_KEY = "quickmart-settings";
 
 const seedProducts: Product[] = [
   {
@@ -357,6 +358,30 @@ export function updateOrderStatus(id: string, status: Order["status"]): Order | 
   order.status = status;
   setStored(ORDERS_KEY, orders);
   return order;
+}
+
+// Store Settings
+export interface StoreSettings {
+  upiId: string;
+  storeName: string;
+  storePhone: string;
+}
+
+const defaultSettings: StoreSettings = {
+  upiId: "",
+  storeName: "QuickMart",
+  storePhone: "",
+};
+
+export function getSettings(): StoreSettings {
+  return { ...defaultSettings, ...getStored<Partial<StoreSettings>>(SETTINGS_KEY, {}) };
+}
+
+export function saveSettings(settings: Partial<StoreSettings>): StoreSettings {
+  const current = getSettings();
+  const updated = { ...current, ...settings };
+  setStored(SETTINGS_KEY, updated);
+  return updated;
 }
 
 // Auth
