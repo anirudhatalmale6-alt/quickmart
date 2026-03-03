@@ -3,6 +3,7 @@ import { Product, Order } from "./types";
 const PRODUCTS_KEY = "quickmart-products";
 const ORDERS_KEY = "quickmart-orders";
 const SETTINGS_KEY = "quickmart-settings";
+const MY_ORDERS_KEY = "quickmart-my-orders";
 
 const seedProducts: Product[] = [
   {
@@ -401,6 +402,29 @@ export function cleanupOldOrders(daysOld: number): number {
   const removed = orders.length - filtered.length;
   if (removed > 0) setStored(ORDERS_KEY, filtered);
   return removed;
+}
+
+// Customer's own order tracking (stored in their browser)
+export function saveMyOrderId(orderId: string): void {
+  const ids = getStored<string[]>(MY_ORDERS_KEY, []);
+  if (!ids.includes(orderId)) {
+    ids.unshift(orderId); // newest first
+    // Keep only last 20 orders
+    if (ids.length > 20) ids.pop();
+    setStored(MY_ORDERS_KEY, ids);
+  }
+}
+
+export function getMyOrderIds(): string[] {
+  return getStored<string[]>(MY_ORDERS_KEY, []);
+}
+
+export function getMyOrders(): Order[] {
+  const ids = getMyOrderIds();
+  const allOrders = getStored<Order[]>(ORDERS_KEY, []);
+  return ids
+    .map((id) => allOrders.find((o) => o.id === id))
+    .filter((o): o is Order => o !== null && o !== undefined);
 }
 
 // Store Settings

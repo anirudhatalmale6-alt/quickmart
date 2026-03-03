@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
-import { getOrderById, cancelOrder } from "@/lib/clientStore";
+import { getOrderById, cancelOrder, getMyOrders } from "@/lib/clientStore";
 import { Order, ORDER_STATUS_LABELS } from "@/lib/types";
 
 function TrackOrderContent() {
@@ -15,6 +15,7 @@ function TrackOrderContent() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelled, setCancelled] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [myOrders, setMyOrders] = useState<Order[]>([]);
 
   // Update time every second for cancel countdown
   useEffect(() => {
@@ -22,8 +23,9 @@ function TrackOrderContent() {
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-load from URL param
+  // Load recent orders + auto-load from URL param
   useEffect(() => {
+    setMyOrders(getMyOrders());
     const urlId = searchParams.get("id");
     if (urlId) {
       setOrderId(urlId);
@@ -112,6 +114,63 @@ function TrackOrderContent() {
           </button>
         </form>
 
+        {/* Recent Orders - shown when not viewing a specific order */}
+        {!searched && myOrders.length > 0 && (
+          <div className="mb-6">
+            <h2 className="font-heading font-semibold text-stone-900 mb-3">
+              Your Recent Orders
+            </h2>
+            <div className="space-y-2">
+              {myOrders.map((o) => (
+                <button
+                  key={o.id}
+                  onClick={() => {
+                    setOrderId(o.id);
+                    setOrder(o);
+                    setSearched(true);
+                    setCancelled(false);
+                  }}
+                  className="w-full bg-white rounded-xl p-4 border border-stone-100 flex items-center justify-between hover:border-brand-green/30 transition-colors text-left"
+                >
+                  <div>
+                    <p className="font-heading font-bold text-sm text-brand-green">
+                      {o.id}
+                    </p>
+                    <p className="text-xs text-stone-400 mt-0.5">
+                      {new Date(o.createdAt).toLocaleString("en-IN")} · ₹{o.total}
+                    </p>
+                  </div>
+                  <span
+                    className={`text-xs font-medium px-2.5 py-1 rounded-lg flex-shrink-0 ${
+                      o.status === "pending"
+                        ? "bg-amber-100 text-amber-700"
+                        : o.status === "confirmed"
+                        ? "bg-blue-100 text-blue-700"
+                        : o.status === "preparing"
+                        ? "bg-purple-100 text-purple-700"
+                        : o.status === "out_for_delivery"
+                        ? "bg-orange-100 text-orange-700"
+                        : o.status === "delivered"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {ORDER_STATUS_LABELS[o.status] || o.status}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!searched && myOrders.length === 0 && (
+          <div className="text-center py-8 text-stone-400">
+            <span className="text-4xl block mb-3">📦</span>
+            <p className="text-sm">No orders yet</p>
+            <p className="text-xs mt-1">Place an order and it will show up here</p>
+          </div>
+        )}
+
         {searched && !order && (
           <div className="bg-red-50 rounded-2xl p-5 border border-red-200 text-center">
             <span className="text-3xl block mb-2">🔍</span>
@@ -124,6 +183,20 @@ function TrackOrderContent() {
 
         {order && (
           <div className="space-y-4">
+            {myOrders.length > 1 && (
+              <button
+                onClick={() => {
+                  setOrder(null);
+                  setSearched(false);
+                  setOrderId("");
+                  setCancelled(false);
+                  setMyOrders(getMyOrders());
+                }}
+                className="text-xs text-brand-green font-medium hover:underline"
+              >
+                ← Back to all orders
+              </button>
+            )}
             {/* Order Info Card */}
             <div className="bg-white rounded-2xl p-5 border border-stone-100">
               <div className="flex items-start justify-between mb-4">

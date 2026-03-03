@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useCart } from "@/components/CartProvider";
-import { addOrder, getSettings } from "@/lib/clientStore";
+import { addOrder, getSettings, saveMyOrderId } from "@/lib/clientStore";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -71,7 +71,8 @@ export default function CheckoutPage() {
         deliveryCharge: 0,
       });
 
-      // Save total before clearing cart
+      // Save order ID for customer tracking & total before clearing cart
+      saveMyOrderId(order.id);
       setOrderTotal(totalPrice);
       clearCart();
 
