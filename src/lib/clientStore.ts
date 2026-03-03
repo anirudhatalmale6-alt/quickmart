@@ -338,12 +338,13 @@ export function getOrders(): Order[] {
   );
 }
 
-export function addOrder(data: Omit<Order, "id" | "createdAt" | "status">): Order {
+export function addOrder(data: Omit<Order, "id" | "createdAt" | "status" | "paymentStatus">): Order {
   const orders = getStored<Order[]>(ORDERS_KEY, []);
   const order: Order = {
     ...data,
     id: "ORD-" + Date.now().toString(36).toUpperCase(),
     status: "pending",
+    paymentStatus: data.paymentMethod === "cod" ? "paid" : "pending",
     createdAt: new Date().toISOString(),
   };
   orders.push(order);
@@ -358,6 +359,48 @@ export function updateOrderStatus(id: string, status: Order["status"]): Order | 
   order.status = status;
   setStored(ORDERS_KEY, orders);
   return order;
+}
+
+export function updatePaymentStatus(id: string, paymentStatus: Order["paymentStatus"]): Order | null {
+  const orders = getStored<Order[]>(ORDERS_KEY, []);
+  const order = orders.find((o) => o.id === id);
+  if (!order) return null;
+  order.paymentStatus = paymentStatus;
+  setStored(ORDERS_KEY, orders);
+  return order;
+}
+
+export function getOrderById(id: string): Order | null {
+  const orders = getStored<Order[]>(ORDERS_KEY, []);
+  return orders.find((o) => o.id === id) || null;
+}
+
+export function cancelOrder(id: string): Order | null {
+  const orders = getStored<Order[]>(ORDERS_KEY, []);
+  const order = orders.find((o) => o.id === id);
+  if (!order) return null;
+  // Can only cancel pending orders
+  if (order.status !== "pending") return null;
+  order.status = "cancelled";
+  setStored(ORDERS_KEY, orders);
+  return order;
+}
+
+export function deleteOrder(id: string): boolean {
+  const orders = getStored<Order[]>(ORDERS_KEY, []);
+  const filtered = orders.filter((o) => o.id !== id);
+  if (filtered.length === orders.length) return false;
+  setStored(ORDERS_KEY, filtered);
+  return true;
+}
+
+export function cleanupOldOrders(daysOld: number): number {
+  const orders = getStored<Order[]>(ORDERS_KEY, []);
+  const cutoff = Date.now() - daysOld * 24 * 60 * 60 * 1000;
+  const filtered = orders.filter((o) => new Date(o.createdAt).getTime() > cutoff);
+  const removed = orders.length - filtered.length;
+  if (removed > 0) setStored(ORDERS_KEY, filtered);
+  return removed;
 }
 
 // Store Settings

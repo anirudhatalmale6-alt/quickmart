@@ -31,6 +31,13 @@ export default function Header() {
           </span>
         </Link>
 
+        <div className="flex items-center gap-2">
+        <Link
+          href="/track"
+          className="text-xs text-stone-500 hover:text-brand-green transition-colors font-medium"
+        >
+          Track Order
+        </Link>
         <Link
           href="/cart"
           className="relative flex items-center gap-1.5 bg-stone-100 hover:bg-stone-200 transition-colors rounded-xl px-3.5 py-2"
@@ -56,6 +63,7 @@ export default function Header() {
             </span>
           )}
         </Link>
+        </div>
       </div>
     </header>
   );

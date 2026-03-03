@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useCart } from "@/components/CartProvider";
-import { addOrder, getSettings } from "@/lib/clientStore";
+import { addOrder, getSettings, updatePaymentStatus } from "@/lib/clientStore";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -21,13 +21,17 @@ export default function CheckoutPage() {
   const [upiId, setUpiId] = useState("");
   const [storeName, setStoreName] = useState("QuickMart");
 
+  // UPI payment confirmation step
+  const [upiStep, setUpiStep] = useState<"checkout" | "pay">("checkout");
+  const [pendingOrderId, setPendingOrderId] = useState("");
+
   useEffect(() => {
     const settings = getSettings();
     if (settings.upiId) setUpiId(settings.upiId);
     if (settings.storeName) setStoreName(settings.storeName);
   }, []);
 
-  if (items.length === 0) {
+  if (upiStep === "checkout" && items.length === 0) {
     if (typeof window !== "undefined") router.push("/");
     return null;
   }
@@ -67,24 +71,106 @@ export default function CheckoutPage() {
 
       clearCart();
 
-      // If UPI selected and UPI ID is set, open UPI deep link
       if (paymentMethod === "upi" && upiId) {
-        const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(storeName)}&am=${totalPrice}&cu=INR&tn=${encodeURIComponent(`Order ${order.id} - ${storeName}`)}`;
-        // Open UPI app
-        window.location.href = upiLink;
-        // Give a moment for UPI app to open, then redirect to success
-        setTimeout(() => {
-          router.push(`/order-success?id=${order.id}`);
-        }, 1500);
+        // Show UPI payment step instead of auto-confirming
+        setPendingOrderId(order.id);
+        setUpiStep("pay");
+        setSubmitting(false);
         return;
       }
 
+      // COD — go directly to order success
       router.push(`/order-success?id=${order.id}`);
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
     }
   };
+
+  const handleOpenUpiApp = () => {
+    const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(storeName)}&am=${totalPrice}&cu=INR&tn=${encodeURIComponent(`Order ${pendingOrderId} - ${storeName}`)}`;
+    window.location.href = upiLink;
+  };
+
+  const handleConfirmPayment = () => {
+    updatePaymentStatus(pendingOrderId, "paid");
+    router.push(`/order-success?id=${pendingOrderId}`);
+  };
+
+  const handlePaymentNotDone = () => {
+    updatePaymentStatus(pendingOrderId, "not_paid");
+    router.push(`/order-success?id=${pendingOrderId}`);
+  };
+
+  // UPI Payment Confirmation Step
+  if (upiStep === "pay") {
+    return (
+      <div className="min-h-screen pb-8">
+        <Header />
+        <main className="max-w-lg mx-auto px-4 pt-6">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">💳</span>
+            </div>
+            <h1 className="font-heading font-bold text-2xl text-stone-900">
+              Complete UPI Payment
+            </h1>
+            <p className="text-stone-500 text-sm mt-1">
+              Order #{pendingOrderId}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 border border-stone-100 space-y-4">
+            <div className="text-center">
+              <p className="text-sm text-stone-500">Amount to pay</p>
+              <p className="font-heading font-bold text-3xl text-brand-green mt-1">
+                ₹{totalPrice}
+              </p>
+            </div>
+
+            <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200 text-center">
+              <p className="text-xs text-emerald-700 font-medium">Pay to UPI ID</p>
+              <p className="text-sm font-bold text-emerald-900 mt-0.5">{upiId}</p>
+            </div>
+
+            {/* Step 1: Open UPI App */}
+            <button
+              onClick={handleOpenUpiApp}
+              className="w-full bg-brand-green hover:bg-brand-green-dark text-white font-heading font-bold text-lg rounded-2xl py-4 transition-colors shadow-lg shadow-emerald-900/15"
+            >
+              Open UPI App to Pay
+            </button>
+
+            <div className="border-t border-stone-100 pt-4">
+              <p className="text-xs text-stone-500 text-center mb-3">
+                After completing payment in your UPI app, come back here and confirm:
+              </p>
+
+              {/* Step 2: Confirm payment */}
+              <div className="space-y-2">
+                <button
+                  onClick={handleConfirmPayment}
+                  className="w-full bg-brand-orange hover:bg-brand-orange-dark text-white font-heading font-bold rounded-2xl py-3.5 transition-colors"
+                >
+                  I Have Paid Successfully
+                </button>
+                <button
+                  onClick={handlePaymentNotDone}
+                  className="w-full bg-stone-100 hover:bg-stone-200 text-stone-600 font-medium rounded-2xl py-3 text-sm transition-colors"
+                >
+                  I Did Not Pay (Will Pay Later / COD)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-stone-400 text-center mt-4">
+            The store owner will verify your payment before confirming the order.
+          </p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-8">
@@ -298,8 +384,7 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     <p className="text-xs text-emerald-600">
-                      After placing the order, tap &quot;Pay Now&quot; to open your UPI
-                      app (GPay, PhonePe, Paytm) with the amount pre-filled.
+                      You will be asked to complete payment after placing the order.
                     </p>
                   </>
                 ) : (

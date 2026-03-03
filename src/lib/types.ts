@@ -23,6 +23,7 @@ export interface Order {
   locationType: "maps_link" | "manual";
   location: string;
   paymentMethod: "upi" | "cod";
+  paymentStatus: "pending" | "paid" | "not_paid";
   items: OrderItem[];
   total: number;
   deliveryCharge: number;

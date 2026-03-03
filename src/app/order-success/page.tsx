@@ -261,9 +261,18 @@ function OrderSuccessContent() {
           </p>
         </div>
 
+        {orderId && (
+          <Link
+            href={`/track?id=${orderId}`}
+            className="block text-center mt-5 bg-white hover:bg-stone-50 text-brand-green font-semibold px-8 py-3.5 rounded-xl transition-colors border-2 border-brand-green"
+          >
+            Track My Order
+          </Link>
+        )}
+
         <Link
           href="/"
-          className="block text-center mt-6 bg-brand-green hover:bg-brand-green-dark text-white font-semibold px-8 py-3.5 rounded-xl transition-colors"
+          className="block text-center mt-3 bg-brand-green hover:bg-brand-green-dark text-white font-semibold px-8 py-3.5 rounded-xl transition-colors"
         >
           Continue Shopping
         </Link>
