@@ -51,8 +51,8 @@ export default function CartPage() {
                 <div
                   className={`w-16 h-16 rounded-xl bg-gradient-to-br ${config?.gradient || "from-stone-100 to-stone-50"} flex items-center justify-center flex-shrink-0 overflow-hidden`}
                 >
-                  {product.image ? (
-                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                  {product.images?.[0] ? (
+                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-3xl">{product.emoji}</span>
                   )}

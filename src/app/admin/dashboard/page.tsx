@@ -52,7 +52,7 @@ export default function AdminDashboard() {
   const [formCategory, setFormCategory] = useState("Fruits");
   const [formDescription, setFormDescription] = useState("");
   const [formEmoji, setFormEmoji] = useState("🍎");
-  const [formImage, setFormImage] = useState("");
+  const [formImages, setFormImages] = useState<string[]>([]);
   const [formInStock, setFormInStock] = useState(true);
 
   // Change password state
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
     setFormCategory("Fruits");
     setFormDescription("");
     setFormEmoji("🍎");
-    setFormImage("");
+    setFormImages([]);
     setFormInStock(true);
     setEditingProduct(null);
     setShowForm(false);
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
     setFormCategory(p.category);
     setFormDescription(p.description);
     setFormEmoji(p.emoji);
-    setFormImage(p.image || "");
+    setFormImages(p.images || []);
     setFormInStock(p.inStock);
     setShowForm(true);
   };
@@ -148,6 +148,10 @@ export default function AdminDashboard() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (formImages.length >= 5) {
+      alert("Maximum 5 images allowed per product");
+      return;
+    }
     if (file.size > 5 * 1024 * 1024) {
       alert("Image must be under 5MB");
       return;
@@ -172,9 +176,11 @@ export default function AdminDashboard() {
       if (!ctx) return;
       ctx.drawImage(img, 0, 0, w, h);
       const compressed = canvas.toDataURL("image/jpeg", 0.7);
-      setFormImage(compressed);
+      setFormImages((prev) => [...prev, compressed]);
     };
     img.src = url;
+    // Reset file input so same file can be re-uploaded
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSaveProduct = () => {
@@ -188,7 +194,7 @@ export default function AdminDashboard() {
       description: formDescription,
       emoji: formEmoji,
       inStock: formInStock,
-      image: formImage || undefined,
+      images: formImages.length > 0 ? formImages : undefined,
     };
 
     if (editingProduct) {
@@ -590,67 +596,53 @@ export default function AdminDashboard() {
                   </h3>
 
                   <div className="space-y-3">
-                    {/* Product Image Upload */}
+                    {/* Product Images Upload (up to 5) */}
                     <div>
                       <label className="block text-sm font-medium text-stone-600 mb-1">
-                        Product Photo
+                        Product Photos ({formImages.length}/5)
                       </label>
-                      <div className="flex items-center gap-3">
-                        {formImage ? (
-                          <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-stone-200">
+                      <div className="flex flex-wrap gap-2">
+                        {formImages.map((img, i) => (
+                          <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-stone-200">
                             <img
-                              src={formImage}
-                              alt="Preview"
+                              src={img}
+                              alt={`Photo ${i + 1}`}
                               className="w-full h-full object-cover"
                             />
                             <button
-                              onClick={() => {
-                                setFormImage("");
-                                if (fileInputRef.current)
-                                  fileInputRef.current.value = "";
-                              }}
-                              className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
+                              onClick={() => setFormImages((prev) => prev.filter((_, idx) => idx !== i))}
+                              className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] leading-none"
                             >
                               x
                             </button>
                           </div>
-                        ) : (
+                        ))}
+                        {formImages.length < 5 && (
                           <div
                             onClick={() => fileInputRef.current?.click()}
-                            className="w-20 h-20 rounded-xl border-2 border-dashed border-stone-300 flex flex-col items-center justify-center cursor-pointer hover:border-brand-green hover:bg-emerald-50/30 transition-colors"
+                            className="w-16 h-16 rounded-xl border-2 border-dashed border-stone-300 flex flex-col items-center justify-center cursor-pointer hover:border-brand-green hover:bg-emerald-50/30 transition-colors"
                           >
                             <svg
-                              width="20"
-                              height="20"
+                              width="18"
+                              height="18"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
                               strokeWidth="2"
                               className="text-stone-400"
                             >
-                              <rect
-                                x="3"
-                                y="3"
-                                width="18"
-                                height="18"
-                                rx="2"
-                              />
-                              <circle cx="8.5" cy="8.5" r="1.5" />
-                              <path d="M21 15l-5-5L5 21" />
+                              <line x1="12" y1="5" x2="12" y2="19" />
+                              <line x1="5" y1="12" x2="19" y2="12" />
                             </svg>
-                            <span className="text-[10px] text-stone-400 mt-1">
-                              Upload
+                            <span className="text-[9px] text-stone-400 mt-0.5">
+                              Add
                             </span>
                           </div>
                         )}
-                        <div className="text-xs text-stone-400">
-                          <p>Upload a photo of the product.</p>
-                          <p>JPG, PNG under 2MB.</p>
-                          <p className="text-stone-300 mt-1">
-                            (Optional — emoji shown if no photo)
-                          </p>
-                        </div>
                       </div>
+                      <p className="text-[11px] text-stone-400 mt-1.5">
+                        Add up to 5 photos. First photo is the main image. (Optional — emoji shown if no photos)
+                      </p>
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -786,10 +778,10 @@ export default function AdminDashboard() {
                   key={p.id}
                   className="bg-white rounded-xl p-3 border border-stone-100 flex items-center gap-3"
                 >
-                  {p.image ? (
+                  {p.images?.[0] ? (
                     <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
                       <img
-                        src={p.image}
+                        src={p.images[0]}
                         alt={p.name}
                         className="w-full h-full object-cover"
                       />

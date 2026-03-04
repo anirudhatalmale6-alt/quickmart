@@ -4,7 +4,7 @@ export interface Product {
   description: string;
   price: number;
   emoji: string;
-  image?: string; // base64 data URL or external URL
+  images?: string[]; // base64 data URLs or external URLs (max 5)
   category: string;
   unit: string;
   inStock: boolean;

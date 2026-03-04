@@ -294,9 +294,19 @@ function setStored<T>(key: string, value: T): boolean {
   }
 }
 
+// Migrate old `image` field to `images` array
+function migrateProduct(p: Product & { image?: string }): Product {
+  if (p.image && (!p.images || p.images.length === 0)) {
+    p.images = [p.image];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (p as any).image;
+  }
+  return p;
+}
+
 function loadProducts(): Product[] {
-  const stored = getStored<Product[] | null>(PRODUCTS_KEY, null);
-  if (stored !== null) return stored;
+  const stored = getStored<(Product & { image?: string })[] | null>(PRODUCTS_KEY, null);
+  if (stored !== null) return stored.map(migrateProduct);
   setStored(PRODUCTS_KEY, seedProducts);
   return [...seedProducts];
 }
@@ -308,6 +318,10 @@ export function getProducts(): Product[] {
 
 export function getAllProducts(): Product[] {
   return loadProducts();
+}
+
+export function getProductById(id: string): Product | null {
+  return loadProducts().find((p) => p.id === id) || null;
 }
 
 export function addProduct(data: Omit<Product, "id" | "createdAt">): Product {

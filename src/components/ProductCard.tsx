@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Product, CATEGORY_CONFIG } from "@/lib/types";
 import { useCart } from "./CartProvider";
 
@@ -11,22 +12,28 @@ export default function ProductCard({ product }: { product: Product }) {
   const config = CATEGORY_CONFIG[product.category] || {
     gradient: "from-stone-100 to-stone-50",
   };
+  const firstImage = product.images?.[0];
 
-  const handleAdd = () => {
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     addItem(product);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 300);
   };
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-stone-100 opacity-0 animate-fade-in">
+    <Link
+      href={`/product?id=${product.id}`}
+      className="block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-stone-100 opacity-0 animate-fade-in"
+    >
       {/* Image / Emoji display area */}
       <div
         className={`bg-gradient-to-br ${config.gradient} h-32 sm:h-36 flex items-center justify-center relative overflow-hidden`}
       >
-        {product.image ? (
+        {firstImage ? (
           <img
-            src={product.image}
+            src={firstImage}
             alt={product.name}
             className="w-full h-full object-cover"
           />
@@ -39,6 +46,12 @@ export default function ProductCard({ product }: { product: Product }) {
               Out of Stock
             </span>
           </div>
+        )}
+        {/* Multi-image indicator */}
+        {product.images && product.images.length > 1 && (
+          <span className="absolute top-2 right-2 bg-black/50 text-white text-[10px] font-medium px-1.5 py-0.5 rounded-md">
+            +{product.images.length - 1}
+          </span>
         )}
       </div>
 
@@ -69,18 +82,18 @@ export default function ProductCard({ product }: { product: Product }) {
               Add
             </button>
           ) : (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1" onClick={(e) => e.preventDefault()}>
               <button
-                onClick={() => updateQuantity(product.id, qty - 1)}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateQuantity(product.id, qty - 1); }}
                 className="w-8 h-8 rounded-lg bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-700 font-bold transition-colors"
               >
-                −
+                -
               </button>
               <span className="w-8 text-center font-semibold text-sm text-brand-green">
                 {qty}
               </span>
               <button
-                onClick={() => updateQuantity(product.id, qty + 1)}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateQuantity(product.id, qty + 1); }}
                 className="w-8 h-8 rounded-lg bg-brand-green hover:bg-brand-green-dark flex items-center justify-center text-white font-bold transition-colors"
               >
                 +
@@ -89,6 +102,6 @@ export default function ProductCard({ product }: { product: Product }) {
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
