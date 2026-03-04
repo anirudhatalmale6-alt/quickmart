@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useCart } from "@/components/CartProvider";
-import { addOrder, getSettings, saveMyOrderId } from "@/lib/clientStore";
+import { addOrder, getSettings, saveMyOrderId, StoreSettings } from "@/lib/clientStore";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -20,6 +20,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const [upiId, setUpiId] = useState("");
   const [storeName, setStoreName] = useState("QuickMart");
+  const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null);
 
   // UPI payment step
   const [upiStep, setUpiStep] = useState<"checkout" | "pay">("checkout");
@@ -29,9 +30,22 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     const settings = getSettings();
+    setStoreSettings(settings);
     if (settings.upiId) setUpiId(settings.upiId);
     if (settings.storeName) setStoreName(settings.storeName);
   }, []);
+
+  // Bill calculation
+  const discountPercent = storeSettings?.discountPercent || 0;
+  const discountAmount = discountPercent > 0 ? Math.round(totalPrice * discountPercent / 100) : 0;
+  const itemsAfterDiscount = totalPrice - discountAmount;
+  const handlingCharge = storeSettings?.handlingCharge || 0;
+  const deliveryCharge = storeSettings?.deliveryCharge || 0;
+  const freeDeliveryAbove = storeSettings?.freeDeliveryAbove || 0;
+  const isFreeDelivery = freeDeliveryAbove > 0 && totalPrice >= freeDeliveryAbove;
+  const actualDeliveryCharge = isFreeDelivery ? 0 : deliveryCharge;
+  const freeDeliveryGap = freeDeliveryAbove > 0 && !isFreeDelivery ? freeDeliveryAbove - totalPrice : 0;
+  const grandTotal = itemsAfterDiscount + handlingCharge + actualDeliveryCharge;
 
   if (upiStep === "checkout" && items.length === 0) {
     if (typeof window !== "undefined") router.push("/");
@@ -67,13 +81,13 @@ export default function CheckoutPage() {
           quantity: i.quantity,
           price: i.product.price,
         })),
-        total: totalPrice,
-        deliveryCharge: 0,
+        total: grandTotal,
+        deliveryCharge: actualDeliveryCharge,
       });
 
       // Save order ID for customer tracking & total before clearing cart
       saveMyOrderId(order.id);
-      setOrderTotal(totalPrice);
+      setOrderTotal(grandTotal);
       clearCart();
 
       if (paymentMethod === "upi" && upiId) {
@@ -400,12 +414,13 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          {/* Order Summary */}
+          {/* Bill Details */}
           <div className="bg-white rounded-2xl p-5 border border-stone-100">
             <h2 className="font-heading font-semibold text-stone-900 mb-3">
-              Order Summary
+              Bill Details
             </h2>
             <div className="space-y-2">
+              {/* Items */}
               {items.map(({ product, quantity }) => (
                 <div
                   key={product.id}
@@ -419,13 +434,76 @@ export default function CheckoutPage() {
                   </span>
                 </div>
               ))}
-              <div className="border-t border-stone-100 pt-2 mt-2 flex justify-between">
-                <span className="font-heading font-bold text-stone-900">
-                  Total
-                </span>
-                <span className="font-heading font-bold text-lg text-brand-green">
-                  ₹{totalPrice}
-                </span>
+
+              <div className="border-t border-stone-100 pt-2 mt-2 space-y-2">
+                {/* Items Total with discount */}
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-600 flex items-center gap-2">
+                    Items total
+                    {discountAmount > 0 && (
+                      <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">
+                        Saved ₹{discountAmount}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-stone-800 font-medium flex items-center gap-1.5">
+                    {discountAmount > 0 && (
+                      <span className="line-through text-stone-400 text-xs">₹{totalPrice}</span>
+                    )}
+                    ₹{itemsAfterDiscount}
+                  </span>
+                </div>
+
+                {/* Handling Charge */}
+                {handlingCharge > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-stone-500">Handling charge</span>
+                    <span className="text-stone-700">₹{handlingCharge}</span>
+                  </div>
+                )}
+
+                {/* Delivery Charge */}
+                {deliveryCharge > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-stone-500">Delivery charge</span>
+                    <span className={`font-medium ${isFreeDelivery ? "text-emerald-600" : "text-stone-700"}`}>
+                      {isFreeDelivery ? (
+                        <span className="flex items-center gap-1.5">
+                          <span className="line-through text-stone-400">₹{deliveryCharge}</span>
+                          FREE
+                        </span>
+                      ) : (
+                        `₹${deliveryCharge}`
+                      )}
+                    </span>
+                  </div>
+                )}
+
+                {/* Free delivery hint */}
+                {freeDeliveryGap > 0 && (
+                  <p className="text-xs text-brand-orange font-medium">
+                    Shop for ₹{freeDeliveryGap} more to get FREE delivery
+                  </p>
+                )}
+
+                {/* Discount label */}
+                {discountAmount > 0 && storeSettings?.discountLabel && (
+                  <div className="bg-emerald-50 rounded-lg p-2 border border-emerald-200">
+                    <p className="text-xs text-emerald-700 font-medium">
+                      {storeSettings.discountLabel} — {discountPercent}% off applied!
+                    </p>
+                  </div>
+                )}
+
+                {/* Grand Total */}
+                <div className="border-t border-stone-100 pt-2 flex justify-between">
+                  <span className="font-heading font-bold text-stone-900">
+                    Grand Total
+                  </span>
+                  <span className="font-heading font-bold text-lg text-brand-green">
+                    ₹{grandTotal}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -444,8 +522,8 @@ export default function CheckoutPage() {
             {submitting
               ? "Placing Order..."
               : paymentMethod === "upi" && upiId
-              ? `Pay ₹${totalPrice} & Place Order`
-              : "Place Order"}
+              ? `Pay ₹${grandTotal} & Place Order`
+              : `Place Order · ₹${grandTotal}`}
           </button>
         </form>
       </main>

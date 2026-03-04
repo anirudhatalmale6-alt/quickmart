@@ -432,12 +432,22 @@ export interface StoreSettings {
   upiId: string;
   storeName: string;
   storePhone: string;
+  deliveryCharge: number;
+  handlingCharge: number;
+  freeDeliveryAbove: number;
+  discountPercent: number;
+  discountLabel: string;
 }
 
 const defaultSettings: StoreSettings = {
   upiId: "",
   storeName: "QuickMart",
   storePhone: "",
+  deliveryCharge: 0,
+  handlingCharge: 0,
+  freeDeliveryAbove: 0,
+  discountPercent: 0,
+  discountLabel: "",
 };
 
 export function getSettings(): StoreSettings {

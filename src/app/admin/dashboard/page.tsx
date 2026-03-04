@@ -38,7 +38,7 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<"products" | "orders" | "settings">("products");
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [settings, setSettings] = useState<StoreSettings>({ upiId: "", storeName: "QuickMart", storePhone: "" });
+  const [settings, setSettings] = useState<StoreSettings>({ upiId: "", storeName: "QuickMart", storePhone: "", deliveryCharge: 0, handlingCharge: 0, freeDeliveryAbove: 0, discountPercent: 0, discountLabel: "" });
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -402,6 +402,115 @@ export default function AdminDashboard() {
                       Customers can contact you on this number for order queries.
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* Charges Section */}
+              <div className="border-t border-stone-100 pt-5">
+                <h3 className="font-heading font-semibold text-stone-900 mb-3 flex items-center gap-2">
+                  <span className="w-6 h-6 bg-brand-orange rounded-full text-white text-xs flex items-center justify-center font-bold">
+                    🛵
+                  </span>
+                  Delivery &amp; Handling Charges
+                </h3>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-stone-600 mb-1">
+                        Delivery Charge (₹)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={settings.deliveryCharge || ""}
+                        onChange={(e) =>
+                          setSettings({ ...settings, deliveryCharge: parseFloat(e.target.value) || 0 })
+                        }
+                        placeholder="25"
+                        className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-stone-600 mb-1">
+                        Handling Charge (₹)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={settings.handlingCharge || ""}
+                        onChange={(e) =>
+                          setSettings({ ...settings, handlingCharge: parseFloat(e.target.value) || 0 })
+                        }
+                        placeholder="4"
+                        className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-stone-600 mb-1">
+                      Free Delivery Above (₹)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={settings.freeDeliveryAbove || ""}
+                      onChange={(e) =>
+                        setSettings({ ...settings, freeDeliveryAbove: parseFloat(e.target.value) || 0 })
+                      }
+                      placeholder="200"
+                      className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                    />
+                    <p className="text-xs text-stone-400 mt-1">
+                      Set to 0 to always charge delivery. Customer sees &quot;Shop for ₹X more to get FREE delivery&quot;.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Offers Section */}
+              <div className="border-t border-stone-100 pt-5">
+                <h3 className="font-heading font-semibold text-stone-900 mb-3 flex items-center gap-2">
+                  <span className="w-6 h-6 bg-purple-500 rounded-full text-white text-xs flex items-center justify-center font-bold">
+                    %
+                  </span>
+                  Offers &amp; Discounts
+                </h3>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-stone-600 mb-1">
+                        Discount (%)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={settings.discountPercent || ""}
+                        onChange={(e) =>
+                          setSettings({ ...settings, discountPercent: parseFloat(e.target.value) || 0 })
+                        }
+                        placeholder="10"
+                        className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-stone-600 mb-1">
+                        Offer Label
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.discountLabel || ""}
+                        onChange={(e) =>
+                          setSettings({ ...settings, discountLabel: e.target.value })
+                        }
+                        placeholder="Grand Opening Sale!"
+                        className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-stone-400">
+                    Set discount to 0 for no offer. The label and savings amount will show on checkout.
+                  </p>
                 </div>
               </div>
 
