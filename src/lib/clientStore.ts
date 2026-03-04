@@ -282,9 +282,16 @@ function getStored<T>(key: string, fallback: T): T {
   }
 }
 
-function setStored<T>(key: string, value: T): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(key, JSON.stringify(value));
+function setStored<T>(key: string, value: T): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch {
+    // Storage quota exceeded
+    alert("Storage is full! Try removing some product images or old orders to free up space.");
+    return false;
+  }
 }
 
 function loadProducts(): Product[] {

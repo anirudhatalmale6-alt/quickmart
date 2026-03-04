@@ -148,15 +148,33 @@ export default function AdminDashboard() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Image must be under 2MB");
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image must be under 5MB");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setFormImage(reader.result as string);
+    // Compress image using canvas to save localStorage space
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      const MAX_SIZE = 300; // max width/height in pixels
+      let w = img.width;
+      let h = img.height;
+      if (w > h) {
+        if (w > MAX_SIZE) { h = Math.round(h * MAX_SIZE / w); w = MAX_SIZE; }
+      } else {
+        if (h > MAX_SIZE) { w = Math.round(w * MAX_SIZE / h); h = MAX_SIZE; }
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL("image/jpeg", 0.7);
+      setFormImage(compressed);
     };
-    reader.readAsDataURL(file);
+    img.src = url;
   };
 
   const handleSaveProduct = () => {
